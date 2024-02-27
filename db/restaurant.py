@@ -1,4 +1,3 @@
-
 import uuid
 
 from .db import db
@@ -14,3 +13,4 @@ class Restaurant(db.Model):
     name: Mapped[str] = mapped_column(Text, nullable=False)
 
     tables = relationship('Table', back_populates='restaurant')
+    endorsements = relationship('Diet', secondary='endorsements', back_populates='restaurants')
