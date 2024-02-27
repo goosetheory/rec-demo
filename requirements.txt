@@ -1,0 +1,8 @@
+flask
+
+# DB
+SQLAlchemy==2.0.19
+SQLAlchemy-Utils
+Flask-Migrate
+psycopg2-binary
+flask-sqlalchemy
