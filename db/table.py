@@ -20,3 +20,10 @@ class Table(db.Model):
 
     restaurant = relationship('Restaurant', back_populates='tables', uselist=False)
     reservations = relationship('Reservation', back_populates='table')
+
+    def to_wire(self):
+        return {
+            'id': str(self.id),
+            'restaurant_id': str(self.restaurant_id),
+            'capacity': self.capacity
+        }

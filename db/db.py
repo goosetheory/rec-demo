@@ -6,7 +6,7 @@ from contextlib import contextmanager
 # want to have to pass it around everywhere/use DI/make a singleton class
 # for this simple demo app.
 
-db = SQLAlchemy()
+db = SQLAlchemy(session_options={"expire_on_commit": False})
 
 def configure_db(app):
     # Such security, much wow

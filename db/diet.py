@@ -15,3 +15,10 @@ class Diet(db.Model):
 
     eaters = relationship('Eater', secondary='restrictions', back_populates='restrictions')
     restaurants = relationship('Restaurant', secondary='endorsements', back_populates='endorsements')
+
+    def to_wire(self):
+        return {
+            'id': str(self.id),
+            'restriction_name': self.restriction_name,
+            'endorsement_name': self.endorsement_name
+        }

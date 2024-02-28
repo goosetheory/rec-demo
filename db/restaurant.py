@@ -14,3 +14,11 @@ class Restaurant(db.Model):
 
     tables = relationship('Table', back_populates='restaurant')
     endorsements = relationship('Diet', secondary='endorsements', back_populates='restaurants')
+
+    def to_wire(self):
+        return {
+            'id': str(self.id),
+            'name': self.name,
+            'endorsements': [endorsement.to_wire() for endorsement in self.endorsements],
+            'tables': [table.to_wire() for table in self.tables]
+        }
