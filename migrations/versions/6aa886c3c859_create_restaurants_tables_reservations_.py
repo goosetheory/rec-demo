@@ -26,7 +26,7 @@ def upgrade():
     op.create_table('tables',
     sa.Column('id', sa.UUID(), nullable=False),
     sa.Column('restaurant_id', sa.UUID(), nullable=False),
-    sa.Column('capacity', sa.Text(), nullable=False),
+    sa.Column('capacity', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['restaurant_id'], ['restaurants.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
