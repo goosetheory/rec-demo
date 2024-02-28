@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from flask import Flask, request
 from http import HTTPStatus
@@ -22,9 +23,8 @@ def index():
 
 @app.route('/restaurants', methods=['GET'])
 def get_restaurants():
-    eater_ids = request.args.getlist('eater_ids')
-    eater_ids = [uuid.UUID(eater_id) for eater_id in eater_ids]
-    start_time = request.args.get('start_time')
+    eater_ids = [uuid.UUID(eater_id) for eater_id in request.args.getlist('eater_ids')]
+    start_time = datetime.fromisoformat(request.args.get('start_time'))
     if not start_time or not eater_ids:
         print(f'Invalid request: eater_ids={eater_ids}, start_time={start_time}')
         return None, HTTPStatus.BAD_REQUEST

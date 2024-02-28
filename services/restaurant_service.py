@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
-from db import session_scope, Restaurant, Diet, Table, Eater
+from db import session_scope, Restaurant, Diet, Table, Eater, Reservation
 
 
 class RestaurantService:
@@ -36,9 +36,17 @@ class RestaurantService:
 
             print(f'Restaurants: {[r.name for r in restaurants]}')
             
+            # Get existing reservations for restaurants, filter based on them
+            earliest_conflicting_reservation = start_time - self.RESERVATION_LENGTH
+            latest_conflicting_reservation = start_time + self.RESERVATION_LENGTH
+            existing_reservations = session.query(Reservation) \
+                .join(Reservation.table) \
+                .filter(Reservation.table.has(Table.restaurant_id.in_([restaurant.id for restaurant in restaurants]))) \
+                .filter(Reservation.start_time > earliest_conflicting_reservation) \
+                .filter(Reservation.start_time < latest_conflicting_reservation) \
+                .all()
 
-
-            # Get existing reservations for restaurants, filter
+            print(f'Existing reservations: {[r.start_time for r in existing_reservations]}')
 
             return restaurants
 
