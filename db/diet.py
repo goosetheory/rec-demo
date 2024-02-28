@@ -12,3 +12,6 @@ class Diet(db.Model):
     id: Mapped[uuid.uuid4] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     restriction_name: Mapped[str] = mapped_column(Text, nullable=False)
     endorsement_name: Mapped[str] = mapped_column(Text, nullable=False)
+
+    eaters = relationship('Eater', secondary='restrictions', back_populates='restrictions')
+    restaurants = relationship('Restaurant', secondary='endorsements', back_populates='endorsements')

@@ -1,4 +1,4 @@
-from .db import configure_db
+from .db import configure_db, session_scope
 
 from .eater import Eater
 from .reservation import Reservation
