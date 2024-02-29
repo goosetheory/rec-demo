@@ -6,3 +6,6 @@ SQLAlchemy-Utils
 Flask-Migrate
 psycopg2-binary
 flask-sqlalchemy
+
+# Testing
+pytest

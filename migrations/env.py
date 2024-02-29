@@ -18,10 +18,10 @@ logger = logging.getLogger('alembic.env')
 def get_engine():
     try:
         # this works with Flask-SQLAlchemy<3 and Alchemical
-        return current_app.extensions['migrate'].db.get_engine()
-    except TypeError:
+        return current_app.extensions["migrate"].db.db.engine
+    except (TypeError, AttributeError):
         # this works with Flask-SQLAlchemy>=3
-        return current_app.extensions['migrate'].db.engine
+        return current_app.extensions['migrate'].db.get_engine()
 
 
 def get_engine_url():
@@ -48,7 +48,7 @@ target_db = current_app.extensions['migrate'].db
 def get_metadata():
     if hasattr(target_db, 'metadatas'):
         return target_db.metadatas[None]
-    return target_db.metadata
+    return target_db.db.metadata
 
 
 def run_migrations_offline():

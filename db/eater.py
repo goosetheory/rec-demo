@@ -12,5 +12,5 @@ class Eater(db.Model):
     id: Mapped[uuid.uuid4] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(Text, nullable=False)
 
-    reservations = relationship('Reservation', secondary='reservation_eaters', back_populates='eaters')
+    reservations = relationship('Reservation', secondary='reservation_eaters', back_populates='eaters', cascade='all, delete')
     restrictions = relationship('Diet', secondary='restrictions', back_populates='eaters')

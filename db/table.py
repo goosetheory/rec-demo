@@ -19,7 +19,7 @@ class Table(db.Model):
     capacity: Mapped[int] = mapped_column(Integer, nullable=False)
 
     restaurant = relationship('Restaurant', back_populates='tables', uselist=False)
-    reservations = relationship('Reservation', back_populates='table')
+    reservations = relationship('Reservation', back_populates='table', cascade='all, delete-orphan')
 
     def to_wire(self):
         return {

@@ -12,7 +12,7 @@ class Restaurant(db.Model):
     id: Mapped[uuid.uuid4] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(Text, nullable=False)
 
-    tables = relationship('Table', back_populates='restaurant')
+    tables = relationship('Table', back_populates='restaurant', cascade='all, delete-orphan')
     endorsements = relationship('Diet', secondary='endorsements', back_populates='restaurants')
 
     def to_wire(self):
