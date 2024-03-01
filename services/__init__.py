@@ -1,1 +1,1 @@
-from .restaurant_service import RestaurantService, NoSuitableTableError
+from .restaurant_service import RestaurantService, NoSuitableTableError, NoSuchReservationError

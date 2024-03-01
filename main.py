@@ -6,7 +6,7 @@ from http import HTTPStatus
 from flask_sqlalchemy import SQLAlchemy
 
 from commands import commands
-from services import RestaurantService, NoSuitableTableError
+from services import RestaurantService, NoSuitableTableError, NoSuchReservationError
 from db import configure_db
 
 app = Flask(__name__)
@@ -66,3 +66,16 @@ def create_reservation():
         return {}, HTTPStatus.CONFLICT
 
     return reservation.to_wire()
+
+
+@app.route('/reservations/<reservation_id>', methods=['DELETE'])
+def delete_reservation(reservation_id):
+    '''
+    Deletes a reservation.
+    '''
+    print(f'Deleting reservation {reservation_id}')
+    try:
+        restaurant_service.delete_reservation(uuid.UUID(reservation_id))
+    except NoSuchReservationError:
+        return {}, HTTPStatus.NOT_FOUND
+    return {}, HTTPStatus.NO_CONTENT

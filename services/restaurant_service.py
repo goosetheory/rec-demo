@@ -55,6 +55,14 @@ class RestaurantService:
             return reservation
 
 
+    def delete_reservation(self, reservation_id):
+        with session_scope() as session:
+            reservation = session.query(Reservation).get(reservation_id)
+            if not reservation:
+                raise NoSuchReservationError()
+            session.delete(reservation)
+            session.commit()
+
     def _filter_restaurants_with_tables(self, session, restaurants, start_time, group_size):
         restaurant_ids = [restaurant.id for restaurant in restaurants]
         open_tables_with_capacity = self._get_open_tables_with_capacity(
@@ -132,4 +140,7 @@ class RestaurantService:
 
 
 class NoSuitableTableError(Exception):
+    pass
+
+class NoSuchReservationError(Exception):
     pass
