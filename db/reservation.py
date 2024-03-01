@@ -16,3 +16,11 @@ class Reservation(db.Model):
 
     table = relationship('Table', back_populates='reservations')
     eaters = relationship('Eater', secondary='reservation_eaters', back_populates='reservations')
+
+    def to_wire(self):
+        return {
+            'id': str(self.id),
+            'table_id': str(self.table_id),
+            'start_time': self.start_time.isoformat(),
+            'eater_ids': [str(eater.id) for eater in self.eaters]
+        }

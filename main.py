@@ -63,6 +63,6 @@ def create_reservation():
     try:
         reservation = restaurant_service.create_reservation(eater_ids, restaurant_id, start_time)
     except NoSuitableTableError:
-        return None, HTTPStatus.CONFLICT
+        return {}, HTTPStatus.CONFLICT
 
     return reservation.to_wire()
