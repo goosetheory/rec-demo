@@ -71,7 +71,6 @@ def _create_tables(restaurant, capacity, number):
     return tables
 
 
-
 @commands.cli.command('empty-db')
 @with_appcontext
 def empty_db():

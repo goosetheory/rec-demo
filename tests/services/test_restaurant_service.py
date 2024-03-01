@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 from db import db, Reservation, Restaurant, Eater, Diet, Table
-from services import RestaurantService
+from services import RestaurantService, NoSuitableTableError
 
 
 class TestRestaurantService:
@@ -81,20 +81,21 @@ class TestRestaurantService:
         yield eater
         db_session.delete(eater)
 
-    # @pytest.fixture()
-    # def reservations_at_vegan_restaurant(self, db_session, vegan_restaurant, meat_eater):
-    #     for table in vegan_restaurant.tables:
-    #         reservation = Reservation(
-    #             table=table,
-    #             start_time=datetime.now(),
-    #             eaters=[meat_eater]
-    #         )
-    #         db_session.add(reservation)
-    #         db_session.commit()
-    #     yield
-    #     for table in vegan_restaurant.tables:
-    #         for reservation in table.reservations:
-    #             db_session.delete(reservation)
+
+    @pytest.fixture()
+    def reservations_at_vegan_restaurant(self, db_session, vegan_restaurant, meat_eater):
+        for table in vegan_restaurant.tables:
+            reservation = Reservation(
+                table=table,
+                start_time=datetime.now(),
+                eaters=[meat_eater]
+            )
+            db_session.add(reservation)
+            db_session.commit()
+        yield
+        for table in vegan_restaurant.tables:
+            for reservation in table.reservations:
+                db_session.delete(reservation)
 
 
     def test_get_restaurants_for_meat_eater_no_reservations(
@@ -117,6 +118,7 @@ class TestRestaurantService:
         assert len(result) == 1
         assert vegan_restaurant in result
 
+
     def test_get_restaurants_for_meat_and_vegan_eater_no_reservations(
             self, restaurant_service, vegan_restaurant, meat_restaurant, vegan_eater, meat_eater):
         # ACT
@@ -126,6 +128,7 @@ class TestRestaurantService:
         assert len(result) == 1
         assert vegan_restaurant in result
     
+
     def test_get_restaurants_for_large_group_no_reservations(
             self, 
             restaurant_service,
@@ -138,6 +141,7 @@ class TestRestaurantService:
         # ASSERT
         assert len(result) == 1
         assert restaurant_with_large_table in result
+
 
     def test_get_restaurants_restaurant_is_booked(
             self,
@@ -162,3 +166,56 @@ class TestRestaurantService:
 
         # ASSERT
         assert len(result) == 0
+
+
+    def test_create_reservation_table_available(
+            self,
+            db_session,
+            restaurant_service,
+            vegan_restaurant,
+            vegan_eater,
+            meat_eater):
+        # ARRANGE
+        reservation_time = datetime.now()
+
+        # ACT
+        result = restaurant_service.create_reservation(
+            [vegan_eater.id, meat_eater.id],
+            vegan_restaurant.id,
+            reservation_time)
+
+        # ASSERT
+        found_reservation = db_session.get(Reservation, result.id)
+        assert found_reservation.start_time == reservation_time
+
+        assert found_reservation.table.restaurant.id == vegan_restaurant.id
+        assert found_reservation.table.capacity == 2
+        
+        expected_eater_ids = {eater.id for eater in found_reservation.eaters}
+        found_eater_ids = {e.id for e in found_reservation.eaters}
+        assert expected_eater_ids == found_eater_ids
+
+
+    def test_create_reservation_no_table_available(
+            self,
+            db_session,
+            restaurant_service,
+            meat_restaurant,
+            vegan_eater,
+            meat_eater):
+        # ARRANGE
+        for table in meat_restaurant.tables:
+            reservation = Reservation(
+                table=table,
+                start_time=datetime.now(),
+                eaters=[vegan_eater]
+            )
+            db_session.add(reservation)
+        db_session.commit()
+
+        # ACT
+        with pytest.raises(NoSuitableTableError):
+            restaurant_service.create_reservation(
+                [meat_eater.id],
+                meat_restaurant.id,
+                datetime.now())

@@ -25,14 +25,59 @@ class RestaurantService:
 
             # TODO: Should we be including table availability on these restaurants?
             return open_restaurants
+        
+    def create_reservation(self, eater_ids, restaurant_id, start_time):
+        with session_scope() as session:
+            eaters = session.query(Eater).filter(Eater.id.in_(eater_ids)).all()
+
+            open_tables_with_capacity = self._get_open_tables_with_capacity(
+                session, [restaurant_id], start_time, len(eater_ids))
+            
+            smallest_suitable_table = None
+            for table in open_tables_with_capacity:
+                if table.capacity < len(eater_ids):
+                    continue
+                if (not smallest_suitable_table 
+                    or table.capacity < smallest_suitable_table.capacity):
+                    # This is the best table we've seen so far
+                    smallest_suitable_table = table
+                
+            if not smallest_suitable_table:
+                raise NoSuitableTableError()
+        
+            reservation = Reservation(
+                start_time=start_time,
+                table_id=smallest_suitable_table.id,
+                eaters=eaters
+            )
+            session.add(reservation)
+            session.commit()
+            return reservation
 
 
     def _filter_restaurants_with_tables(self, session, restaurants, start_time, group_size):
-        # Note to rec: these should be subqueries, but I've left them
+        restaurant_ids = [restaurant.id for restaurant in restaurants]
+        open_tables_with_capacity = self._get_open_tables_with_capacity(
+            session, restaurant_ids, start_time, group_size)
+        
+        table_ids = [t.id for t in open_tables_with_capacity]
+        
+        # Get tables at restriction-friendly restaurants with no conflicting reservations
+        open_restaurants = session.query(Restaurant) \
+            .join(Restaurant.tables) \
+            .filter(Restaurant.tables.any(Table.id.in_(table_ids))) \
+            .all()
+        
+        return open_restaurants
+
+
+    def _get_open_tables_with_capacity(self, session, restaurant_ids, start_time, group_size):
+        # Note to rec: these should likely be subqueries, but I've left them
         # separate for now for debugging purposes.
+        
         # We're only interested in tables with space for all our eaters
         table_ids_without_enough_capacity = session.query(Table.id) \
-            .filter(Table.restaurant_id.in_(restaurant.id for restaurant in restaurants)) \
+            .filter(Table.restaurant_id.in_(restaurant_ids)) \
             .filter(Table.capacity < group_size) \
             .all()
 
@@ -40,10 +85,9 @@ class RestaurantService:
         # Here, we find tables that are booked.
         earliest_conflicting_reservation = start_time - self.RESERVATION_LENGTH
         latest_conflicting_reservation = start_time + self.RESERVATION_LENGTH
-        large_enough_table_ids_without_overlapping_reservations = session.query(Table.id) \
+        large_enough_tables_without_overlapping_reservations = session.query(Table) \
             .filter(~Table.id.in_([t.id for t in table_ids_without_enough_capacity])) \
-            .filter(Table.restaurant_id.in_(
-                [restaurant.id for restaurant in restaurants])) \
+            .filter(Table.restaurant_id.in_(restaurant_ids)) \
             .filter(
                 ~Table.reservations.any(
                     and_(
@@ -54,16 +98,7 @@ class RestaurantService:
             ) \
             .all()
         
-        # Get tables at restriction-friendly restaurants with no conflicting reservations
-        open_restaurants = session.query(Restaurant) \
-            .join(Restaurant.tables) \
-            .filter(Restaurant.id.in_(
-                [restaurant.id for restaurant in restaurants])) \
-            .filter(Restaurant.tables.any(Table.id.in_(
-                [t.id for t in large_enough_table_ids_without_overlapping_reservations]))) \
-            .all()
-        
-        return open_restaurants
+        return large_enough_tables_without_overlapping_reservations
 
 
     def _get_restriction_friendly_restaurants(self, session, eater_ids):
@@ -94,3 +129,7 @@ class RestaurantService:
             .all()
         
         return restriction_friendly_restaurants
+
+
+class NoSuitableTableError(Exception):
+    pass
