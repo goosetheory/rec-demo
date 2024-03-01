@@ -57,11 +57,12 @@ class RestaurantService:
 
     def delete_reservation(self, reservation_id):
         with session_scope() as session:
-            reservation = session.query(Reservation).get(reservation_id)
+            reservation = session.get(Reservation, reservation_id)
             if not reservation:
                 raise NoSuchReservationError()
             session.delete(reservation)
             session.commit()
+
 
     def _filter_restaurants_with_tables(self, session, restaurants, start_time, group_size):
         restaurant_ids = [restaurant.id for restaurant in restaurants]

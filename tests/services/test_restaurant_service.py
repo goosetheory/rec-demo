@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 from db import db, Reservation, Restaurant, Eater, Diet, Table
-from services import RestaurantService, NoSuitableTableError
+from services import RestaurantService, NoSuitableTableError, NoSuchReservationError
 
 
 class TestRestaurantService:
@@ -219,3 +219,35 @@ class TestRestaurantService:
                 [meat_eater.id],
                 meat_restaurant.id,
                 datetime.now())
+
+
+    def test_delete_reservation(
+            self,
+            db_session,
+            restaurant_service,
+            vegan_restaurant,
+            vegan_eater,
+            meat_eater):
+        # ARRANGE
+        reservation = Reservation(
+            table=vegan_restaurant.tables[0],
+            start_time=datetime.now(),
+            eaters=[vegan_eater, meat_eater]
+        )
+        db_session.add(reservation)
+        db_session.commit()
+
+        # ACT
+        restaurant_service.delete_reservation(reservation.id)
+
+        # ASSERT
+        assert db_session.get(Reservation, reservation.id) is None
+
+
+    def test_delete_reservation_nonexistent(
+            self,
+            db_session,
+            restaurant_service):
+        # ACT
+        with pytest.raises(NoSuchReservationError):
+            restaurant_service.delete_reservation('00000000-0000-0000-0000-000000000000')
